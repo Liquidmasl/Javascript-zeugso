@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Vis1 InfoVis Lab Exercise</title>
+
+    <link rel="stylesheet" href="http://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+
+    <style>
+
+        body {
+            font: 12px sans-serif;
+        }
+
+        svg {
+            font: 10px sans-serif;
+        }
+
+        .instructions {
+            color: red;
+        }
+
+        .optional {
+            color: darkgreen;
+        }
+
+        .axis line,
+        .axis path {
+            fill: none;
+            stroke: #000;
+            shape-rendering: crispEdges;
+        }
+
+        .axis text {
+            fill: black;
+        }
+
+        fieldset {
+            border-width: 0;
+        }
+
+    </style>
+</head>
+
+<body>
+
+
+<h1>Vis1 InfoVis Lab Exercise</h1>
+
+<!-- include d3 -->
+<script src="https://d3js.org/d3.v4.min.js"></script>
+
+<!-- include jQueryUI -->
+<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+<!-- TODO: duerfen wir das? -->
+<script src="jquery-csv.js"></script>
+
+<div class="instructions">TODOs:
+<ul>
+    <li>Load data file using d3</li>
+    <li>Parse dimensions (i.e., column headers)</li>
+</ul>
+</div>
+
+
+<!-- parallel coordinates -->
+<h2>Parallel Coordinates</h2>
+<div class="instructions">TODOs:
+    <ul>
+        <li>Label axes with parsed dimensions</li>
+        <li>Scale axes to extents of dimensions</li>
+        <li>Render the poly lines</li>
+    </ul>
+</div>
+<div class="optional">Optional TODOs:
+    <ul>
+        <li>Display the name attribute on mouseover</li>
+        <li>Implement brushing+linking between parallel coordinates and scatterplot</li>
+    </ul>
+</div>
+<div id="pc"></div>
+
+<!-- menu -->
+<h2>Scatterplot</h2>
+<p>Select dimensions to be displayed here: </p>
+<div id="menu">
+
+    <form action="#">
+
+        <fieldset>
+            <label for="scatterX">x axis: </label>
+            <select name="scatterX" id="scatterX">
+            </select>
+            <label for="scatterY">y axis: </label>
+            <select name="scatterY" id="scatterY">
+            </select>
+            <br/>
+            <label for="color">color: </label>
+            <select name="color" id="color">
+            </select>
+            <label for="size">size: </label>
+            <select name="size" id="size">
+            </select>
+        </fieldset>
+
+    </form>
+
+</div>
+
+<!-- scatterplot -->
+<div class="instructions">TODOs:
+    <ul>
+        <li>Scale axes to extents of dimensions selected in the menu</li>
+        <li>Render dots at correct positions</li>
+        <li>Map selected color dimension to a color scale</li>
+        <li>Size dots according to chosen size dimension</li>
+    </ul>
+</div>
+<div class="optional">Optional TODOs:
+    <ul>
+        <li>Make transitions animated</li>
+        <li>Display the name attribute on mouseover</li>
+    </ul>
+</div>
+<div id="sp"></div>
+
+<!-- credits -->
+<div id="credits">
+    Created by <div class="instructions">Marcel Winklmüller</div>
+    based on Vis1 example by <a href="http://www.cg.tuwien.ac.at">CG-institute at TU Wien</a>.
+</div>
+
+<script>
+
+    // define size plots
+    var margin = {top: 20, right: 20, bottom: 20, left: 50},
+            widthPC = 960,
+            height = 500,
+            widthSP = 600;
+
+    // parallel coordinates SVG container
+    var svgPC = d3.select("#pc").append("svg")
+            .attr("width", widthPC)
+            .attr("height", height)
+            .append("g");
+
+    // scatterplot SVG container and axes
+    var svgSP = d3.select("#sp").append("svg")
+            .attr("width", widthPC)
+            .attr("height", height)
+            .append("g");
+
+    var xAxisSP, yAxisSP, xAxisLabelSP, yAxisLabelSP;
+
+    // TODO: parse dimensions (i.e., attributes) from input file*
+
+    var url = "http://users.cg.tuwien.ac.at/waldner/vis1/data/";
+    var dataSets = ["breastCancer.csv", "cars.csv", "flowers.csv", "nutrients.csv"];
+
+
+    $.ajax({
+        url: url+dataSets[0],
+        async: false,
+        success: [
+            function (csvd) {
+            data = $.csv.toArrays(csvd);
+            alert("test");
+        }
+        ],
+        error: function(jqxhr,textStatus,errorThrown)
+        {
+            console.log(jqxhr);
+            console.log(textStatus);
+            console.log(errorThrown);
+
+            for (key in jqxhr)
+                alert(key + ":" + jqxhr[key])
+            for (key2 in textStatus)
+                alert(key + ":" + textStatus[key])
+            for (key3 in errorThrown)
+                alert(key + ":" + errorThrown[key])
+
+        },
+        dataType: "text",
+        complete: function () {
+            // call a function on complete
+
+        }
+    });
+
+
+
+
+
+    var dimensions = ["dimension 1", "dimension 2", "dimension 3", "dimension 4", "dimension 5", "dimension 6"];
+    //*HINT: the first dimension is often a label; you can simply remove the first dimension with
+    // dimensions.splice(0, 1);
+
+    // create scatterplot dimension selection menu
+    initMenu("scatterX", dimensions);
+    initMenu("scatterY", dimensions);
+    initMenu("color", dimensions, "none");
+    initMenu("size", dimensions, "none");
+
+
+    // x scaling for parallel coordinates
+    var xPC = d3.scalePoint()
+            .domain(dimensions)
+            .range([margin.left, widthPC - margin.left - margin.right]);
+
+    // y scalings
+    // TODO: set y domain for each dimension
+    var y = d3.scaleLinear()
+            .range([height - margin.bottom - margin.top, margin.top]);
+
+    // TODO: render parallel coordinates polylines
+
+    // parallel coordiantes axes container
+    var gPC = svgPC.selectAll(".dimension")
+            .data(dimensions)
+            .enter().append("g")
+            .attr("class", "dimension")
+            .attr("transform", function(d) { return "translate(" + xPC(d) + ")"; });
+
+    // parallel coordiantes axes
+    gPC.append("g")
+            .attr("class", "axis")
+            .call(d3.axisLeft(y)) // TODO: call axis scale for current dimension*
+            .append("text")
+            .style("text-anchor", "middle")
+            .attr("y", margin.top / 2)
+            .text("domain name"); // TODO: get domain name from data
+
+    // *HINT: to make a call for each bound data item, use .each!
+    // example: http://bl.ocks.org/milroc/4254604
+
+
+    // x scalings for scatter plot
+    // TODO: set x domain for each dimension
+    var xSP = d3.scaleLinear()
+            .range([margin.left, widthSP - margin.left - margin.right]);
+
+    // scatterplot axes
+    yAxisSP = svgSP.append("g")
+            .attr("class", "axis")
+            .attr("transform", "translate(" + margin.left + ")")
+            .call(d3.axisLeft(y));
+
+    yAxisLabelSP = yAxisSP.append("text")
+            .style("text-anchor", "middle")
+            .attr("y", margin.top / 2)
+            .text("x");
+
+    xAxisSP = svgSP.append("g")
+            .attr("class", "axis")
+            .attr("transform", "translate(0, " + (height - margin.bottom - margin.top) + ")")
+            .call(d3.axisBottom(xSP));
+
+    xAxisLabelSP = xAxisSP.append("text")
+            .style("text-anchor", "middle")
+            .attr("x", widthSP - margin.right)
+            .text("y");
+
+    renderSP();
+
+
+    // render scatterplot
+    function renderSP(){
+
+        // TODO: get domain names from menu and label x- and y-axis
+
+        // TODO: re-render axes
+
+        // TODO: render dots
+    }
+
+    // init scatterplot select menu
+    function initMenu(id, entries, none){
+        entries.forEach(function(d) {
+            $( "select#" + id ).append("<option>"+d+"</option>");
+        });
+        if(none) $( "select#" + id ).append("<option selected='selected'>none</option>");
+
+        $( "#"+id ).selectmenu({
+            select: function() {
+                renderSP();
+            }
+        });
+    }
+
+    // read current scatterplot parameters
+    function readMenu(id){
+        return $( "#" + id ).val();
+    }
+
+
+</script>
+
+
+
+</body>
+</html>
