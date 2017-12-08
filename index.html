@@ -54,8 +54,9 @@
 <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 
-<!-- TODO: duerfen wir das? -->
+<!-- TODO: duerfen wir das?
 <script src="jquery-csv.js"></script>
+-->
 
 <div class="instructions">TODOs:
 <ul>
@@ -159,40 +160,151 @@
     var url = "http://users.cg.tuwien.ac.at/waldner/vis1/data/";
     var dataSets = ["breastCancer.csv", "cars.csv", "flowers.csv", "nutrients.csv"];
 
-
-    $.ajax({
-        url: url+dataSets[0],
-        async: false,
-        success: [
-            function (csvd) {
-            data = $.csv.toArrays(csvd);
-            alert("test");
-        }
-        ],
-        error: function(jqxhr,textStatus,errorThrown)
-        {
-            console.log(jqxhr);
-            console.log(textStatus);
-            console.log(errorThrown);
-
-
-            alert("error");
-
-        },
-        dataType: "text",
-        complete: function () {
-            // call a function on complete
-
-        }
-    });
-
-
-
-
-
     var dimensions = ["dimension 1", "dimension 2", "dimension 3", "dimension 4", "dimension 5", "dimension 6"];
+
+    var data = getData("cars.csv");
+    //alert(data);
+    dimensions = data[0];
+
+    function getData(fileName) {
+
+        var outData = []
+        $.ajax({
+            async:false,
+            type: "GET",
+            url: fileName,
+            dataType: "text",
+            success: function (data) {
+                var arrData = processData(data);
+                //alert("success!");
+                //alert(arrData);
+                outData =  arrData;
+            },
+            error: function (jqxhr, textStatus, errorThrown) {
+                alert("error");
+
+                console.log(jqxhr);
+                console.log(textStatus);
+                console.log(errorThrown);
+            }
+        });
+
+        return outData;
+    }
+
+    function processData(data) {
+
+        var arrData = CSVToArray(data);
+
+        dimensions = arrData[0];
+        var objects = [];
+
+        objects[0] = dimensions;
+
+        for (var i = 1; i < arrData.length; i++){
+            objects[i] = new Object();
+
+            for (var j = 0; j < dimensions.length; j++){
+                objects[i][dimensions[j]] = arrData[i][j];
+            }
+        }
+
+        return objects;
+    }
+
+
+    // ref: http://stackoverflow.com/a/1293163/2343
+    // This will parse a delimited string into an array of
+    // arrays. The default delimiter is the comma, but this
+    // can be overriden in the second argument.
+    function CSVToArray( strData, strDelimiter ){
+        // Check to see if the delimiter is defined. If not,
+        // then default to comma.
+        strDelimiter = (strDelimiter || ",");
+
+        // Create a regular expression to parse the CSV values.
+        var objPattern = new RegExp(
+            (
+                // Delimiters.
+                "(\\" + strDelimiter + "|\\r?\\n|\\r|^)" +
+
+                // Quoted fields.
+                "(?:\"([^\"]*(?:\"\"[^\"]*)*)\"|" +
+
+                // Standard fields.
+                "([^\"\\" + strDelimiter + "\\r\\n]*))"
+            ),
+            "gi"
+        );
+
+
+        // Create an array to hold our data. Give the array
+        // a default empty first row.
+        var arrData = [[]];
+
+        // Create an array to hold our individual pattern
+        // matching groups.
+        var arrMatches = null;
+
+
+        // Keep looping over the regular expression matches
+        // until we can no longer find a match.
+        while (arrMatches = objPattern.exec( strData )){
+
+            // Get the delimiter that was found.
+            var strMatchedDelimiter = arrMatches[ 1 ];
+
+            // Check to see if the given delimiter has a length
+            // (is not the start of string) and if it matches
+            // field delimiter. If id does not, then we know
+            // that this delimiter is a row delimiter.
+            if (
+                strMatchedDelimiter.length &&
+                strMatchedDelimiter !== strDelimiter
+            ){
+
+                // Since we have reached a new row of data,
+                // add an empty row to our data array.
+                arrData.push( [] );
+
+            }
+
+            var strMatchedValue;
+
+            // Now that we have our delimiter out of the way,
+            // let's check to see which kind of value we
+            // captured (quoted or unquoted).
+            if (arrMatches[ 2 ]){
+
+                // We found a quoted value. When we capture
+                // this value, unescape any double quotes.
+                strMatchedValue = arrMatches[ 2 ].replace(
+                    new RegExp( "\"\"", "g" ),
+                    "\""
+                );
+
+            } else {
+
+                // We found a non-quoted value.
+                strMatchedValue = arrMatches[ 3 ];
+
+            }
+
+
+            // Now that we have our value string, let's add
+            // it to the data array.
+            arrData[ arrData.length - 1 ].push( strMatchedValue );
+        }
+
+        // Return the parsed data.
+        return( arrData );
+    }
+
+
+
+    //
     //*HINT: the first dimension is often a label; you can simply remove the first dimension with
-    // dimensions.splice(0, 1);
+    dimensions.splice(0, 1);
 
     // create scatterplot dimension selection menu
     initMenu("scatterX", dimensions);
